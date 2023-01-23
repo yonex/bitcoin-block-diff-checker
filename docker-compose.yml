@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  # Diff チェッカーを cron で起動するコンテナ
+  app:
+    build: .
+    environment:
+      BITCOIND_HOST: bitcoind
+      BITCOIND_PORT: 8332
+      BITCOIND_USERNAME: appuser
+      BITCOIND_PASSWORD: tPGZ1VTKXxgqUWBlRjdy4Gw9zL1iooXduE3kWjf1w08= # rpcauth.py で生成
+      SLACK_WEBHOOK_URL: # .env ファイルに記述してください
+    init: true
+
+  # Bitcoin ノード
+  bitcoind:
+    # Apple silicon でも使えるイメージを探した結果、良さそうだったもの
+    # https://github.com/ruimarinho/docker-bitcoin-core
+    image: ruimarinho/bitcoin-core:23
+    volumes:
+      - bitcoin-data:/home/bitcoin/.bitcoin
+    command:
+      - "-printtoconsole"
+      - "-rpcallowip=0.0.0.0/0" # docker network 内のみへの公開なので全開放で OK
+      - "-rpcbind=0.0.0.0"
+      - "-rpcauth=appuser:14c6113746cafea08c1d3a134f3de6b1$$02b95983745f0f96f3e972b3958e89f1d34b20569b498736c61c8a00f2da0d9d"
+    stop_grace_period: 1m # デフォルトの10秒だと終了処理が間に合わないことがありそう
+
+volumes:
+  bitcoin-data:
